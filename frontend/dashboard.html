@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeAuthentic - Instructor Dashboard</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <div class="brand-title">CodeAuthentic</div>
+      <div class="brand-sub">Instructor Examination Console</div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-outline" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <aside class="sidebar">
+      <div class="card">
+        <div class="card-title">Create Exam Lobby</div>
+        <form id="create-lobby-form" onsubmit="handleCreateLobby(event)">
+          <input type="text" id="lobby-title" placeholder="e.g. CS101 Midterm Lab A" required>
+          <label for="lobby-language" style="display: block; color: var(--muted); font-size: 0.8rem; margin-bottom: 0.35rem;">Required source language</label>
+          <select id="lobby-language" required>
+            <option value="c">C (.c)</option>
+            <option value="java">Java (.java)</option>
+            <option value="python" selected>Python (.py)</option>
+          </select>
+          <input type="number" id="lobby-duration" min="5" max="480" value="120" placeholder="Duration (minutes)" required>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Create Session</button>
+        </form>
+      </div>
+
+      <div class="card" style="flex: 1; overflow-y: auto;">
+        <div class="card-title">
+          <span>Your Lobbies</span>
+          <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="loadLobbies()">Refresh</button>
+        </div>
+        <div id="lobbies-list">
+          <p class="text-muted" style="font-size: 0.85rem;">Loading sessions...</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content-area" id="lobby-view">
+      <div id="no-lobby-selected" style="text-align: center; padding: 4rem 1rem;" class="text-muted">
+        <h3>No Exam Lobby Selected</h3>
+        <p style="margin-top: 0.5rem;">Select an existing lobby from the sidebar or create a new session above.</p>
+      </div>
+
+      <div id="active-lobby-container" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <h2 id="active-title" style="font-size: 1.5rem; font-weight: 700;">CS101 Lab</h2>
+              <span id="active-status-badge" class="badge badge-active">ACTIVE</span>
+              <span id="active-language-badge" class="badge"></span>
+            </div>
+            <div class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
+              Expires: <span id="active-expires">--</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn btn-outline" onclick="copyLobbyLink()">Copy Student Link</button>
+            <button class="btn btn-success" onclick="downloadCSV()">Export CSV</button>
+            <button id="lock-btn" class="btn btn-danger" onclick="lockCurrentLobby()">Lock Session</button>
+            <button class="btn btn-danger" onclick="deleteCurrentLobby()">Delete Lobby</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-students">0</div>
+            <div class="stat-label">Total Students</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-submissions">0</div>
+            <div class="stat-label">Submissions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-analyzed">0</div>
+            <div class="stat-label">Analyzed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-processed">0%</div>
+            <div class="stat-label">Processed</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>Live Submissions (Ordered by AI Risk)</span>
+            <span id="ws-status" class="text-muted" style="font-size: 0.75rem;">Connecting live feed...</span>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>File Name</th>
+                <th>Language</th>
+                <th>AI Probability</th>
+                <th>Risk Level</th>
+                <th>Status</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody id="submissions-tbody">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem;" class="text-muted">No submissions yet. Awaiting student uploads.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="notice-box">
+          <strong>Academic Integrity Notice:</strong> Scores are probabilities calculated from CodeBERT representations to support manual instructor review, not proof of academic dishonesty.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

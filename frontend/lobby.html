@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeAuthentic - Examination Code Submission</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="page-center">
+  <div class="portal-box">
+    <div class="header">
+      <h1>CodeAuthentic</h1>
+      <p>CCIS - Examination Source Submission</p>
+      <div id="lobby-badge" class="lobby-badge">Loading session...</div>
+    </div>
+
+    <div id="closed-container" class="closed-box">
+      <h2>This session is closed.</h2>
+      <p>The examination time window has expired or the instructor has locked submissions.</p>
+    </div>
+
+    <div id="upload-container">
+      <div id="status-alert" class="alert"></div>
+
+      <form id="submission-form" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label for="student-id">Student ID Number</label>
+          <input type="text" id="student-id" required placeholder="e.g. 2023-01234" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label id="file-language-label">Source Code Files</label>
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+            <svg class="dropzone-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <div style="font-weight: 600; margin-top: 0.5rem;">Click to browse or drop files here</div>
+            <p id="file-language-help">Maximum 3 files, up to 200 KB each.</p>
+            <input type="file" id="file-input" multiple style="display: none;" onchange="handleFilesSelected(this.files)">
+          </div>
+
+          <ul class="file-list" id="file-list"></ul>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submit-btn" disabled>Submit Source Code</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const lobbyId = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+    let selectedFiles = [];
+    let activeLanguage = null;
+
+    const LANGUAGE_EXTENSIONS = { c: '.c', java: '.java', python: '.py' };
+    const ALLOWED_EXTS = ['.c', '.java', '.py'];
+    const MAX_SIZE = 200 * 1024;
+
+    async function checkLobbyStatus() {
+      try {
+        const res = await fetch(`/public/lobbies/${lobbyId}/status`);
+        if (!res.ok) throw new Error('Session not found');
+        const data = await res.json();
+
+        document.getElementById('lobby-badge').textContent = data.title;
+        activeLanguage = data.language;
+        const requiredExtension = LANGUAGE_EXTENSIONS[activeLanguage];
+        document.getElementById('file-language-label').textContent =
+          `Source Code Files (${requiredExtension} only)`;
+        document.getElementById('file-language-help').textContent =
+          `Maximum 3 files, up to 200 KB each (${requiredExtension} only).`;
+        document.getElementById('file-input').accept = requiredExtension;
+
+        if (!data.active) {
+          document.getElementById('upload-container').style.display = 'none';
+          document.getElementById('closed-container').style.display = 'block';
+        }
+      } catch (err) {
+        document.getElementById('upload-container').style.display = 'none';
+        document.getElementById('closed-container').style.display = 'block';
+        document.getElementById('closed-container').querySelector('h2').textContent = 'Session Unavailable';
+        document.getElementById('closed-container').querySelector('p').textContent = err.message;
+      }
+    }
+
+    function handleFilesSelected(fileList) {
+      const alertEl = document.getElementById('status-alert');
+      alertEl.style.display = 'none';
+
+      const newFiles = Array.from(fileList);
+      if (selectedFiles.length + newFiles.length > 3) {
+        showError('You can submit a maximum of 3 files total.');
+        return;
+      }
+
+      const requiredExtension = LANGUAGE_EXTENSIONS[activeLanguage];
+      for (const file of newFiles) {
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        if (ext !== requiredExtension) {
+          showError(`This lobby accepts only ${requiredExtension} files. '${file.name}' was not added.`);
+          return;
+        }
+      }
+
+      for (const file of newFiles) {
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        if (file.size > MAX_SIZE) {
+          showError(`File '${file.name}' exceeds the 200 KB size limit.`);
+          return;
+        }
+        if (!selectedFiles.some(f => f.name === file.name)) {
+          selectedFiles.push(file);
+        }
+      }
+
+      renderFileList();
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const listEl = document.getElementById('file-list');
+      const submitBtn = document.getElementById('submit-btn');
+
+      listEl.innerHTML = selectedFiles.map((f, idx) => `
+        <li class="file-item">
+          <span><code>${escapeHtml(f.name)}</code> (${Math.round(f.size / 1024)} KB)</span>
+          <button type="button" class="file-remove" onclick="removeFile(${idx})">&times;</button>
+        </li>
+      `).join('');
+
+      submitBtn.disabled = selectedFiles.length === 0;
+    }
+
+    const dropzone = document.getElementById('dropzone');
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files) {
+        handleFilesSelected(e.dataTransfer.files);
+      }
+    });
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const studentId = document.getElementById('student-id').value.trim();
+      const submitBtn = document.getElementById('submit-btn');
+
+      if (!studentId) {
+        showError('Please enter your Student ID.');
+        return;
+      }
+      if (selectedFiles.length === 0) {
+        showError('Please select at least 1 source file.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting files...';
+
+      const formData = new FormData();
+      formData.append('student_id', studentId);
+      selectedFiles.forEach(file => {
+        formData.append('files', file);
+      });
+
+      try {
+        const res = await fetch(`/lobbies/${lobbyId}/submit`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Submission failed');
+        }
+
+        showSuccess('Submission received! Your files have been uploaded successfully.');
+        selectedFiles = [];
+        renderFileList();
+        document.getElementById('student-id').value = '';
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Source Code';
+      }
+    }
+
+    function showError(msg) {
+      const alertEl = document.getElementById('status-alert');
+      alertEl.textContent = msg;
+      alertEl.className = 'alert alert-error';
+      alertEl.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+      const alertEl = document.getElementById('status-alert');
+      alertEl.textContent = msg;
+      alertEl.className = 'alert alert-success';
+      alertEl.style.display = 'block';
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    window.addEventListener('DOMContentLoaded', checkLobbyStatus);
+  </script>
+</body>
+</html>

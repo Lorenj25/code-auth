@@ -1,0 +1,81 @@
+# Node & Frontend Build
+node_modules/
+build/
+dist/
+coverage/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Linters
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Datasets (gitignored as specified)
+dataset/
+dataset/*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Trained ML artifacts: keep local, share via trusted backup/deployment channel
+ml/heads/*.joblib
+ml/heads/*.joblib.backup
+ml/heads/*.json
+ml/candidates/
+
+# Private settings and credentials
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Training caches and backups
+ml/_feature_cache/
+ml/_python_java_test_backups/
+backup_*/
+*_backups/
+
+# Local archives and large model weights
+*.zip
+*.safetensors
+*.pt
+*.pth
+*.pkl

@@ -1,0 +1,36 @@
+CodeAuthentic Phase 3 - Windows Dataset Checksum Fix
+===================================================
+Fix: ml/import_research_dataset.py now writes exact UTF-8 bytes instead of
+writing text that Windows may transparently convert from LF to CRLF.
+This preserves the SHA-256 checksum saved in each language manifest.
+
+Installation (PowerShell, inside the thesis-main project root)
+--------------------------------------------------------------
+1. Save a backup of your working project or at minimum the original
+   ml/import_research_dataset.py and dataset/ folder.
+2. Extract CodeAuthentic_PHASE3_Windows_Import_Fix.zip into the project root.
+   When prompted, REPLACE ml/import_research_dataset.py. Do not remove .env,
+   database records, AI model files, or other application files.
+3. Use the same corrected CSV previously imported into the project:
+
+   python -m ml.import_research_dataset --csv ".\HumanVsAI_CodeDataset_CodeAuthentic_Ready.csv" --overwrite
+
+   Because this was just imported, --overwrite replaces the existing dataset
+   sample files and manifests. It does not affect the database or login system.
+   If you edited the imported samples manually, back up dataset/ first.
+
+4. Verify that Python imported files match their manifest checksums:
+
+   python -c "from pathlib import Path; from ml.train_head import load_records; print('Python samples verified:', len(load_records(Path('dataset/python'), 'python')))"
+
+   Expected: Python samples verified: 2678
+
+5. Start Python training again:
+
+   python -m ml.train_head --language python --data dataset/python
+
+This fix DOES NOT train a classifier or change detection accuracy.
+It only repairs the integrity mismatch that blocks training.
+
+Validation in patch environment: 7,359 imported sample files (Python 2,678,
+Java 2,945, C 1,736) matched SHA-256 manifests; 11 workflow tests passed.

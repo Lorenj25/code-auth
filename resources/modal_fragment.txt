@@ -1,0 +1,82 @@
+      {logoutConfirmOpen && (
+        <div
+          className="ca-logout-overlay fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 ca-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-confirm-title"
+          aria-describedby="logout-confirm-description"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            aria-label="Dismiss logout confirmation"
+            onClick={() => setLogoutConfirmOpen(false)}
+          />
+          <div className="ca-logout-card relative w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[28px] p-5 sm:p-7 text-center ca-fade-up">
+            <button
+              type="button"
+              onClick={() => setLogoutConfirmOpen(false)}
+              className="ca-logout-close absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ca-muted transition-colors cursor-pointer"
+              aria-label="Close logout dialog"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="ca-logout-shell">
+              <div className="ca-logout-badge">Session ending</div>
+
+              <div className="ca-logout-illustration">
+                <div className="ca-logout-illustration-ring" aria-hidden="true" />
+                <img
+                  src={logoutLeaveArt}
+                  alt=""
+                  className="ca-logout-image"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <div className="ca-logout-copy">
+                <h2
+                  id="logout-confirm-title"
+                  className="font-display text-2xl sm:text-[2rem] leading-tight font-bold text-ca-ink"
+                >
+                  Come back soon
+                  <span className="text-ca-brand">.</span>
+                </h2>
+                <p
+                  id="logout-confirm-description"
+                  className="mt-3 text-sm sm:text-[15px] leading-6 text-ca-muted"
+                >
+                  You are about to securely sign out of your CodeAuthentic instructor workspace.
+                  You can log back in anytime to continue managing lobbies and reviewing submissions.
+                </p>
+              </div>
+
+              <div className="ca-logout-note">
+                <span className="ca-logout-note-dot" aria-hidden="true" />
+                Your current session will be closed on this device.
+              </div>
+
+              <div className="mt-7 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLogoutConfirmOpen(false)}
+                  className="ca-logout-btn ca-logout-btn-secondary"
+                >
+                  Stay here
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLogoutConfirmOpen(false);
+                    onLogout();
+                  }}
+                  className="ca-logout-btn ca-logout-btn-primary"
+                >
+                  Yes, log out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
